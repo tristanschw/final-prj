@@ -1,0 +1,12 @@
+
+<launch>
+
+
+<param name="robot_transformation_to_tag" type="str" textfile="$(find ik)/src/baxter.urdf" />
+
+<include file="$(find baxter_moveit_config)/launch/planning_context.launch" />
+<include file="$(find baxter_moveit_config)/launch/move_group.launch" />
+<include file="$(find baxter_moveit_config)/launch/path_planner.launch" />
+
+
+</launch>
