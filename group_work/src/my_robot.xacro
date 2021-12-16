@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<robot name="sawyer" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="gazebo" default="false"/>
+  <xacro:arg name="pedestal" default="true"/>
+  <xacro:arg name="static" default="true"/>
+  <xacro:arg name="electric_gripper" default="false"/>
+  <xacro:arg name="allegro_hand" default="true"/>
+
+  <!-- Sawyer Base URDF -->
+  <xacro:include filename="$(find sawyer_description)/urdf/sawyer_base.urdf.xacro">
+    <xacro:arg name="gazebo" value="${gazebo}"/>
+    <xacro:arg name="pedestal" value="${pedestal}"/>
+  </xacro:include>
+
+  <xacro:if value="$(arg gazebo)">
+  <xacro:include filename="$(find sawyer_description)/urdf/sawyer_base.gazebo.xacro">
+    <xacro:arg name="static" value="${static}"/>
+    <xacro:arg name="pedestal" value="${pedestal}"/>
+  </xacro:include>
+  </xacro:if>
+
+  <!-- Electric Gripper End Effector -->
+  <xacro:if value="$(arg electric_gripper)">
+  <xacro:include filename="$(find sawyer_description)/urdf/sawyer_electric_gripper.urdf.xacro">
+    <xacro:arg name="gazebo" value="${gazebo}"/>
+  </xacro:include>
+  </xacro:if>
+
+  <!-- Allegro Hand End Effector -->
+  <xacro:if value="$(arg allegro_hand)">
+  <xacro:include filename="$(find allegro_hand_description)/allegro_hand_description_right.xacro">
+    <xacro:arg name="gazebo" value="${gazebo}"/>
+  </xacro:include>
+  </xacro:if>
+
+  <joint name="sawyer_to_mount" type="fixed">
+    <parent link="right_hand"/>
+    <child link="mount"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>        
+
+
+  <joint name="mount_to_hand" type="fixed">
+    <parent link="mount"/>
+    <child link="palm_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0.08"/>
+  </joint>
+
+  <link name="mount">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.025" radius="0.0275"/>
+      </geometry>
+      <material name="silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.025" radius="0.0275"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.16"/>
+      <inertia ixx= "3.9e-5" ixy = "0" ixz="0" iyy="3.9e-5" iyz="0" izz="5e-5"/>
+    </inertial>
+  </link>
+
+
+
+</robot> 

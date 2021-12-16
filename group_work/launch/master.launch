@@ -1,0 +1,18 @@
+<launch>
+  <!-- our launch file -->
+  <include file="$(find group_work)/launch/main.launch" />
+
+  <!-- first set of alex's nodes   -->
+  <node name="sawyer_cams" pkg="lab4_cam" type="both_sawyer_cams.py"></node>
+  <include file="$(find lab4_cam)/launch/sawyer_wrist_track.launch"></include>
+  <include file="$(find lab4_cam)/launch/nominal.launch" ></include>
+  <node name="webcam_to_base" pkg="lab_4_cam" type="trans_webcam_to_base.py"></node>
+  
+  <!-- ten second wait for calibration -->
+  <arg name = "node_start_delay" default = "10.0" />
+  <node name="joint_trajectory_action_server" pkg="intera_interface" type="joint_trajectory_action_server.py" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@'"></node>
+
+  <include file="$(find sawyer_moveit_config)/launch/sawyer_moveit.launch"> <arg name="electric_gripper" value="false"/> </include>
+  <node name="AR_path_test" pkg="planning" type="AR_tag_pathtest.py"></node>
+
+</launch>
