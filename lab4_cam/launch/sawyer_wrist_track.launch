@@ -1,5 +1,7 @@
 <launch>
 
+<!--   This file was given to us by Joesphine and edited by Alex Chemali to remap the topic that the AR tracking on the Sawyer Head Camera
+  publishes to. From visualization_marker to visualization_marker_sawyer so that it doesn't interfere with the webcam AR tracking. -->
 
   <arg name="marker_size" default="15" />
   <arg name="max_new_marker_error" default="0.05" />

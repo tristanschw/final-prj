@@ -1,4 +1,8 @@
 <launch>
+<!--   This file was written by Alex Chemali and Tristan Schwab.
+  It runs the image_view node and launches the run_cam and ar_track launch files from lab 4.
+  This initializes AR tracking on the webcam. -->
+  
   <node name="image_view" pkg="image_view" type="image_view" output="screen" >
   <remap from="/image" to="/usb_cam/image_raw"/>
   </node>

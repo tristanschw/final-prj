@@ -7,6 +7,9 @@
 #
 ####
 
+# This code is not written by Group 2, it was on the Sawyer Rethink Fourm to allow the simultaneous access of the Sawyer cameras
+# https://rethinkrobotics.interaforum.com/topic/391-access-to-sawyers-cameras-simultaneously/
+
 import rospy
 from intera_core_msgs.srv._IOComponentCommandSrv import IOComponentCommandSrv
 from intera_core_msgs.msg._IOComponentCommand import IOComponentCommand
