@@ -4,10 +4,8 @@
 #include "allegro_node.h"
 
 
-// Joint-space torque control of the Allegro hand.
-//
-// Listens to allegroHand/torque_cmd topic and sets the desired joint torques
-// directly.
+// This is our updated header file for the new controller, we had to add some methods from the
+// position controller. 
 class BHand;
 
 class AllegroNodeTorque : public AllegroNode {
@@ -22,7 +20,8 @@ class AllegroNodeTorque : public AllegroNode {
 
     // Sets desired joint torques based on the effort in a JointState message.
     void setTorqueCallback(const sensor_msgs::JointState &msg);
-
+   
+   //Set the position when using the position controller.
     void setJointCallback(const sensor_msgs::JointState &msg);
 
     // Turns torque control on or off.

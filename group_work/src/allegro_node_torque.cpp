@@ -1,3 +1,7 @@
+// This is our combined controller file, we took the position controller and the torque controller
+// from the allegro_hand library and merged them together. It uses call backs to switch between the 
+// two different types of control.
+
 using namespace std;
 
 #include "allegro_node_torque.h"
@@ -53,6 +57,7 @@ void AllegroNodeTorque::setJointCallback(const sensor_msgs::JointState &msg) {
 }
 
 // Called when an external (string) message is received
+//This method allows us to choose between using the torque controller or the position controller
 void AllegroNodeTorque::libCmdCallback(const std_msgs::String::ConstPtr &msg) {
   ROS_INFO("CTRL: Heard: [%s]", msg->data.c_str());
 
@@ -88,6 +93,7 @@ void AllegroNodeTorque::computeDesiredTorque() {
   // is already set in the callback).
 }
 
+//Initialises the controller with the position controller.
 void AllegroNodeTorque::initController(const std::string &whichHand) {
 
   controlTorque = false;
