@@ -1,7 +1,7 @@
 # final-prj
 This is the main Repository for our EECS106a final project from Fall 2021
 
-Project Website: https://sites.google.com/d/1XHFfi17DicB8K-Omcrn4VPBUL4X48q6p/p/1GJGMEZHu4iqI9sSfIRoyIfsF7tiat4L7/edit
+Project Website: https://sites.google.com/berkeley.edu/yhprumshand/introduction
 
 
 Authors:  Alex Chemali,
