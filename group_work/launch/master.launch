@@ -1,3 +1,7 @@
+<!-- This was my attempt at writing one master launch file, I was hoping for the demo we could just run one launch file
+and have everything work together. Unfortuneately we were not able to fully integrate everything and so didn't get 
+to use this file.  -->
+
 <launch>
   <!-- our launch file -->
   <include file="$(find group_work)/launch/main.launch" />

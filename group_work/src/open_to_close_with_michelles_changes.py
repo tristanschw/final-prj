@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # license removed for brevity
 
+# This node was a work in progress, unfortuneately we were not able to fully integrate it.
+# The idea was that it would run by iteself based on messages it recieved from other nodes.
+
 import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState

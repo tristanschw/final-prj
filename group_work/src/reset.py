@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # license removed for brevity
+
+# This node was not used in the main loop, it was just to help us go back to a fixed 
+# reference position to test different torques from.
+
+
 import rospy
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState

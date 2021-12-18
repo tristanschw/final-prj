@@ -1,3 +1,9 @@
+Our custom Xacro file. When you run the Xacro command on this file it 
+creates the combined URDF of Sawyer and the hand, and links them together including 
+the mount that we created.
+
+
+
 <?xml version="1.0" ?>
 <robot name="sawyer" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
@@ -34,6 +40,7 @@
   </xacro:include>
   </xacro:if>
 
+  <!-- The link that joins the end of the Sawyer to the mount -->
   <joint name="sawyer_to_mount" type="fixed">
     <parent link="right_hand"/>
     <child link="mount"/>
@@ -41,12 +48,15 @@
   </joint>        
 
 
+<!-- The link between the mount and the hand -->
   <joint name="mount_to_hand" type="fixed">
     <parent link="mount"/>
     <child link="palm_link"/>
     <origin rpy="0 0 0" xyz="0 0 0.08"/>
   </joint>
 
+
+<!-- The details of the custom mount we made, including its mass, dimensions and inertia matrix -->
   <link name="mount">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>

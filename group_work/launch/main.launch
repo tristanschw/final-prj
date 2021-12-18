@@ -1,34 +1,9 @@
 <launch>
-    <!-- This is a test for github -->
+    <!-- This was our main launch file. We based it of a launch file we found in the Allegro 
+    hand library, and we changed the default parameters to fit our hand. It launches a tf publisher
+    and launches the hand using our custom "torque" controller -->
 
-    <!--
-        
-        Suggested arguments:
-            NUM:=0|1|...
-            ZEROS:=/path/to/zeros_file.yaml
-            CONTROLLER:=grasp|pd|velsat|torque|sim
-            RESPAWN:=true|false   Respawn controller if it dies.
-            KEYBOARD:=true|false  (default is true)
-            AUTO_CAN:=true|false  (if true, ignores CAN_DEVICE argument and finds the can device automagically).
-            CAN_DEVICE:=/dev/pcanusb1 | /dev/pcanusbNNN  (ls -l /dev/pcan* to see open CAN devices)
-            VISUALIZE:=true|false  (Launch rviz)
-            JSP_GUI:=true|false  (If true, start a joint_state_publisher for commanded joint angles).
-            GAZEBO:=true|false  (NOTE: Gazebo support is highly experimental at this point)
-
-        This script launches the following nodes:
-          - allegro hand controller (different controllers exist)
-          - keyboard controller
-          - state publisher (for TF information)
-
-        NOTE: If you specify the can device manually (CAN_DEVICE:=/dev/pcanusbN),
-              make sure you *also* specify AUTO_CAN:=false.
-
-    -->
-
-
-  <!-- The inclusion of which_hand in the zero.yaml file has been deprecated.
-        Which hand (left/right) must now be specified as an argument when launching the Allegro Hand
-        as an input for both the robot_description and for the grasping library controllers. -->
+  
 
   <arg name="HAND" default="right"/>
   <arg name="NUM" default="0"/>
@@ -36,13 +11,9 @@
   <arg name="JSP_GUI" default="false"/>
   <arg name ="VISUALIZE" default="false" />
 
-  <!-- 
-  Something about Rviz launching needs to go here, 
-  will ideally combine with moveit/sawyer rviz launching
-  look at allegro_hand_description.allegro_hand_config.rviz
-  -->
+ 
 
-  <!-- Sets the controller to the default grasp controller, we should read This
+  <!-- Sets the controller to our custom "torque" controller, we should read This
   and or potentially re write it a bit or even make our own controller? -->
   <arg name="CONTROLLER" default="torque"/> 
 
@@ -69,19 +40,24 @@
       command="$(find xacro)/xacro
               $(find allegro_hand_description)/allegro_hand_description_$(arg HAND).xacro"/>
   
+
+  <!-- These lines create a custom URDF file from the Xacro file that we created, 
+  it then sets a new rosparam: robot_description_with_hand to the URDF. When we
+  lauch Rviz we can set the robot description to this paramter to get the complete
+  visualisation of the sawyer and the hand with all the tf data. -->
+
   <param name="robot_description_with_hand"
           command="$(find xacro)/xacro --inorder 
                     $(find group_work)/src/my_robot.xacro"/> 
 
+
+  <!-- These lines publish static transforms to link the Sawyer to the hand, this allows TF to maintain a 
+  continuous tree of transforms. -->
   <node pkg="tf" type="static_transform_publisher" name="sawyer_to_mount_broadcaster" args="0 0 0 0 0 0 1 right_hand mount 100" />
   <node pkg="tf" type="static_transform_publisher" name="mount_to_hand_broadcaster" args="0 0 0.13 0 0 0 1 mount palm_link 100" />
-  <!-- <node pkg="tf" type="static_transform_publisher" name="sawyer_base_transform_broadcaster" args="0 0 0 0 0 0 1 right_arm_base_link right_l0 100" /> -->
 
 
-  <!-- Now the parameters are mapped to a controller and it is launched,
-  this is what we can change if we choose to design our own controller. -->
-
-
+  <!-- Now the parameters are mapped to a controller and it is launched -->
   <node name="allegroHand_$(arg HAND)_$(arg NUM)"
         pkg="allegro_hand_controllers"
         type="allegro_node_$(arg CONTROLLER)"
@@ -92,18 +68,10 @@
         args="$(arg POLLING)" >
 
 
-  <!-- <node name="allegroHand_$(arg HAND)_$(arg NUM)"
-        pkg="group_work"
-        type="hand_control"
-        output="screen"
-        clear_params="true"
-        respawn="$(arg RESPAWN)"
-        respawn_delay="2"
-        args="$(arg POLLING)" > -->
-
+  
   <!-- 
-  Sets the topics of the allegro hand, we might need to 
-  change some of this if we want it to share certain topics with Sawyer -->
+  Sets the topics of the allegro hand, incase we ever expanded to 2 hands, 
+  it keeps all the topic names separate. -->
 
     <remap from="allegroHand/joint_states" to="allegroHand_$(arg NUM)/joint_states"/>
     <remap from="allegroHand/joint_cmd" to="allegroHand_$(arg NUM)/joint_cmd"/>
@@ -113,6 +81,8 @@
     <remap from="allegroHand/joint_current_states" to="allegroHand_$(arg NUM)/joint_current_states"/>
     <remap from="allegroHand/joint_desired_states" to="allegroHand_$(arg NUM)/joint_desired_states"/>
 
+
+    <!-- Load in some more ros parameters -->
     <rosparam file="$(arg ZEROS)" command="load" />
     <rosparam file="$(arg PARAMS_DIR)/gains_pd.yaml" command="load" />
     <rosparam file="$(arg PARAMS_DIR)/gains_velSat.yaml" command="load" />
@@ -127,20 +97,9 @@
 
   </node>
 
-  <!-- 
-  Not too sure what this is but if we are using the
-  "joint states" topic then we should maybe take a look
-  at this -->
+  
 
-  <!-- NOTE: The joint_state_publisher is actually commanding *desired* joint
-       angles. You can use the 'sim' controller to have a non-existent hand. -->
-  <!-- <node name="joint_states_$(arg NUM)" pkg="joint_state_publisher" type="joint_state_publisher"
-        if="$(arg JSP_GUI)">
-    <remap from="joint_states" to="allegroHand_$(arg NUM)/joint_cmd"/>
-    <param name="use_gui" value="true"/>
-  </node> -->
-
-  <!-- Joint States (angles) to Joint Transforms -->
+  <!-- launches the tf data node, and remaps the names so the hand's tf topics don't overlap with Sawyer-->
   <node name="jointState2tf_$(arg NUM)"
         pkg="robot_state_publisher"
         output="screen" 
@@ -149,9 +108,7 @@
     <remap from="joint_states" to="allegroHand_$(arg NUM)/joint_states"/>
   </node>
 
-  <!-- We don't want our launch file to go straight into their
-  keyboard handler, so I'm commenting this out for now. -->
-  <!-- Keyboard handler (if arg KEYBOARD is true) -->
+  <!-- This is incase we ever need to go back to controlling the hand with the keyboard -->
   <node name="keyboard_$(arg NUM)"
         pkg="allegro_hand_keyboard"
         type="allegro_hand_keyboard"
