@@ -15,4 +15,4 @@ Sawyer arm and Allegro hand are obstructing the head camera. This is because we 
 node which will look for messages from the two AR tracking topics and do matrix multiplication to get the pose from the base to the usb camera. Thus we can only rely on the 
 usb camera for the path planning as long as its view remains unobstructed.
 
-Alex Chemali was the main contributer with Tristan Schwab editing assisting on nominal.launch and setup of the package.
+Alex Chemali was the main contributer with Tristan Schwab assisting on nominal.launch and setup of the package.
