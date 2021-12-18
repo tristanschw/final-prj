@@ -141,7 +141,8 @@ class Pose_from_AR(object):
 					
 					# stop broadcasting after 10 times
 					if (numSent < 10):
-						br = tf2_ros.StaticTransformBroadcaster() #tf.TransformBroadcaster()
+						# broadcast the tf between the base and usb_cam to tf static topic
+						br = tf2_ros.StaticTransformBroadcaster()
 						br.sendTransform(tf_webcam_to_base)
 						numSent = numSent + 1
 
