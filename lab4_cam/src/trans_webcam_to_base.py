@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# This node was written by Alex Chemali
+# It looks up the tf between the base and headcam of the sawyer and subscribes to the visualization marker
+# topics being publised by the AR tracking nodes. It then matrix multiplies the poses and broadcasts the 
+# result to the tf static tree. Effectively calibrating the position between the base and webcam. 
+
 import tf2_ros
 import tf
 import sys
@@ -14,6 +19,8 @@ import numpy as np
 import time
 
 # Helper Functions
+# were determined to be needed and written with the help of this post:
+# https://stackoverflow.com/questions/55150211/how-to-calculate-relative-pose-between-two-objects-and-put-them-in-a-transformat
 ###########################################################################################
 
 def PoseStamped_2_mat(p): # convert posestamped to matrix (leaves out header)
@@ -63,23 +70,24 @@ class Pose_from_AR(object):
 		self.startTimeWebcam = None
 		self.startTimeHeadcam = None   
 
-	def marker_pose_webcam_cb(self, data): #need this callback function to extract the data
+	def marker_pose_webcam_cb(self, data): #need this callback function to extract the data for Subscriber
 		self.marker_pose_webcam = data.pose
 		if self.startTimeWebcam is None:
 			self.startTimeWebcam = time.time()
 		# print(data.pose)
 
-	def marker_pose_headcam_cb(self, data): #need this callback function to extract the data
+	def marker_pose_headcam_cb(self, data): #need this callback function to extract the data for Subscriber
 		self.marker_pose_headcam = data.pose
 		if self.startTimeHeadcam is None:
 			self.startTimeHeadcam = time.time()
 		# print(data.pose)
 
 	def webcam_to_base(self):
-
+		# Subscribe to the both topics that hold the pose of the AR tag with reference from the webcam and headcam
 		sub1 = rospy.Subscriber('visualization_marker', Marker, queue_size=10, callback = self.marker_pose_webcam_cb)
 		sub2 = rospy.Subscriber('visualization_marker_sawyer', Marker, queue_size=10, callback = self.marker_pose_headcam_cb)
-
+		
+		# Create a tf listener with a buffer
 		tfBuffer = tf2_ros.Buffer()
 		tfListener = tf2_ros.TransformListener(tfBuffer)
 		r = rospy.Rate(10)
@@ -90,28 +98,34 @@ class Pose_from_AR(object):
 		while not rospy.is_shutdown():
 			try:		
 
-				#skip this iteration if there are no poses being read in either one
+				#skip this iteration if there are no poses being read from either AR tracking nodes
 				if (self.marker_pose_webcam is None or self.marker_pose_webcam is None):
 					continue
 
-				#check if we are reciving poses from both the ar_marker topics and 10 seconds has passed for both of them to start calibration
+				#check if we are reciving poses from both the AR marker topics and 10 seconds has passed for both of them to start calibration
 				if self.marker_pose_webcam is not None and self.marker_pose_headcam is not None and (time.time()-self.startTimeWebcam)>10 and (time.time()-self.startTimeHeadcam)>10:
-					print('TRUE')
+					# print('TRUE')
 					numReceived = numReceived + 1
+					
+					# lookup tf between the base and head_camera (static)
 					trans_headcam_to_base = tfBuffer.lookup_transform('base', 'head_camera', rospy.Time())
 
 					webcam_ar_pose = self.marker_pose_webcam
 					headcam_ar_pose = self.marker_pose_headcam
+					
+					# extracting the poses from each message type using the helper functions
 					T_webcam_to_ar = Pose_2_mat(webcam_ar_pose)
 					T_headcam_to_ar = Pose_2_mat(headcam_ar_pose)
 					T_headcam_to_base = TransformStamped_2_mat(trans_headcam_to_base.transform)
 
-
+					# correct matrix multiplication in order to get right pose from the base to usb_cam
 					T_webcam_to_base = np.linalg.inv(np.matmul(np.matmul(T_webcam_to_ar, np.linalg.inv(T_headcam_to_ar)), np.linalg.inv(T_headcam_to_base)))
+					
+					# extract the quaternion to convert to rotation matrix
 					quaternion_T_webcam_to_base = quaternion_from_matrix(T_webcam_to_base)
 
+					# create the TransformStamped message to be published
 					tf_webcam_to_base = TransformStamped()
-					# tf_webcam_to_base.header.stamp = self.get_clock().now().to_msg()
 					tf_webcam_to_base.header.frame_id = 'base'
 					tf_webcam_to_base.child_frame_id = 'usb_cam'
 					tf_webcam_to_base.transform.translation.x = T_webcam_to_base[0,3]
@@ -121,12 +135,14 @@ class Pose_from_AR(object):
 					tf_webcam_to_base.transform.rotation.y = quaternion_T_webcam_to_base[1]
 					tf_webcam_to_base.transform.rotation.z = quaternion_T_webcam_to_base[2]
 					tf_webcam_to_base.transform.rotation.w = quaternion_T_webcam_to_base[3]
+					
+					# print to terminal
 					print('Publish {} {}: {}'.format(numSent, numReceived, tf_webcam_to_base))
-
+					
+					# stop broadcasting after 10 times
 					if (numSent < 10):
 						br = tf2_ros.StaticTransformBroadcaster() #tf.TransformBroadcaster()
 						br.sendTransform(tf_webcam_to_base)
-						#br.sendTransform((T_webcam_to_base[0,3], T_webcam_to_base[1,3], T_webcam_to_base[2,3]), quaternion_T_webcam_to_base, rospy.Time.now(), "base", "usb_cam")
 						numSent = numSent + 1
 
 				else:
@@ -151,56 +167,4 @@ if __name__ == '__main__':
     	class_instance.webcam_to_base()
     except rospy.ROSInterruptException:
 		pass
-
-
-
-# def webcam_to_base(webcam_frame, ar_frame, headcam_frame, base):
-# 	pub = rospy.Publisher('/tf_webcam_to_base', PoseStamped, queue_size=10)
-# 	tfBuffer = tf2_ros.Buffer()
-# 	tfListener = tf2_ros.TransformListener(tfBuffer)
-# 	r = rospy.Rate(10)
-
-# 	while not rospy.is_shutdown():
-# 		try:
-# 			trans_webcam_to_ar = tfBuffer.lookup_transform(webcam_frame, ar_frame, rospy.Time())
-# 			trans_ar_to_headcam = tfBuffer.lookup_transform(ar_frame, headcam_frame, rospy.Time())
-# 			trans_headcam_to_base = tfBuffer.lookup_transform(headcam_frame, base, rospy.Time())
-			
-# 			# pose_webcam_to_ar = trans_webcam_to_ar.pose
-# 			# pose_ar_to_headcam = trans_ar_to_headcam.pose
-# 			# pose_headcam_to_base = trans_headcam_to_base.pose
-
-# 			T_webcam_to_ar = PoseStamped_2_mat(trans_webcam_to_ar)
-# 			T_ar_to_headcam = PoseStamped_2_mat(trans_ar_to_headcam)
-# 			T_headcam_to_base = PoseStamped_2_mat(trans_headcam_to_base)
-
-# 			T_webcam_to_base = np.matmul(np.matmul(T_webcam_to_ar, T_ar_to_headcam), T_headcam_to_base)
-
-# 			trans_webcam_to_base = Mat_2_posestamped(T_webcam_to_base)
-
-# 			pub.publish(trans_webcam_to_base)
-# 			print(trans_webcam_to_base)
-# 		except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-# 			print("error")
-
-
-
-
-
-
-	
-# target_frame, source_frame = sys.argv[1], sys.argv[2]
-# tfBuffer = tf2_ros.Buffer()
-# tfListener = tf2_ros.TransformListener(tfBuffer)
-
-
-# while not rospy.is_shutdown():
-# 	try:
-# 		trans = tfBuffer.lookup_transform(target_frame, source_frame, rospy.Time())
-# 		pub = rospy.Publisher('transform_pub', PoseStamped, queue_size=10)
-# 		pub.publish(trans)
-# 		print(trans)
-# 	except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-# 		print("error")
-
 
