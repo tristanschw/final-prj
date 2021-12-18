@@ -24,6 +24,7 @@ class rgb_segmentation():
 
     def verify_placemenent(self,green_coordinates, red_coordinates, blue_coordinates):
         if((green_coordinates[0][0] > red_coordinates[0][0]) and (red_coordinates[0][0] > blue_coordinates[0][0])):
+            #this will tell if it is on the center.
             return 0
         else:
             if(blue_coordinates[0][0] > red_coordinates[0][0]):
@@ -33,17 +34,14 @@ class rgb_segmentation():
                 #off by to the right
                 return red_coordinates[0][0] - green_coordinates[0][0]
 
-    def verify_placemenent_y(self, green_coordinates, red_coordinates):
-        if( red_coordinates[0][1] > green_coordinates[0][1]):
-            return (red_coordinates[0][1] - green_coordinates[0][1])
-        else:
-            return 0.0
+    # 
+    
 
     def return_ans(self):
         print("helo")
         cap = cv2.VideoCapture(0)
         # This drives the program to run for 3 seconds
-        t_end = time.time() + 5
+        t_end = time.time() + 1
 
         while(time.time() < t_end):       
             # Captures the live stream frame-by-frame
@@ -96,16 +94,16 @@ class rgb_segmentation():
                 # print("These are the coordinates for red: ") 
                 red_coordinates = np.average(cv2.findNonZero(red_mask), axis = 0)
 
-                if((self.verify_placemenent(green_coordinates, red_coordinates, blue_coordinates) == 0) and (self.verify_placemenent_y(green_coordinates, red_coordinates))):
+                if(self.verify_placemenent(green_coordinates, red_coordinates, blue_coordinates) == 0):
                     ans = "0.0"
 
                 else:
-                    y_coor = self.verify_placemenent_y(green_coordinates, red_coordinates)
+                   # y_coor = self.verify_placemenent_y(green_coordinates, red_coordinates)
                     if(blue_coordinates[0][0] > red_coordinates[0][0]):
                         x_coor = self.verify_placemenent(green_coordinates, red_coordinates, blue_coordinates)
-                        ans = str((-1*x_coor)+ (y_coor))
+                        ans = str(x_coor)
                     else:
-                        ans = str((self.verify_placemenent(green_coordinates, red_coordinates, blue_coordinates)) + y_coor)
+                        ans = str(self.verify_placemenent(green_coordinates, red_coordinates, blue_coordinates))
             else:
                 ans = "None found"                                                                                                                                                                                 
         cv2.destroyAllWindows()
